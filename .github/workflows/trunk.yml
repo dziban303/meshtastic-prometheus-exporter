@@ -103,7 +103,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }} 
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -113,9 +113,9 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           tags: |
-            ghcr.io/dziban303/meshtastic-prometheus-exporter:${{ needs.build.outputs.our-version-full }}
-            ghcr.io/dziban303/meshtastic-prometheus-exporter:${{ needs.build.outputs.our-version-major }}
-            ghcr.io/dziban303/meshtastic-prometheus-exporter:latest
+            ghcr.io/${{ github.repository_owner }}/meshtastic-prometheus-exporter:${{ needs.build.outputs.our-version-full }}
+            ghcr.io/${{ github.repository_owner }}/meshtastic-prometheus-exporter:${{ needs.build.outputs.our-version-major }}
+            ghcr.io/${{ github.repository_owner }}/meshtastic-prometheus-exporter:latest
 
   # publish-to-pypi:
   #   name: >-
