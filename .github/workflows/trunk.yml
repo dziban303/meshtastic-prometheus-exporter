@@ -47,13 +47,25 @@ jobs:
       - uses: actions/checkout@v6
       - id: our-version-major
         run: |
-          echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f 1) >> $GITHUB_OUTPUT
+          v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f1 | tr -d '\r\n' | xargs)
+          echo "version=$v" >> $GITHUB_OUTPUT
       - id: our-version-minor
         run: |
-          echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f 2) >> $GITHUB_OUTPUT
+          v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f2 | tr -d '\r\n' | xargs)
+          echo "version=$v" >> $GITHUB_OUTPUT
       - id: our-version-full
         run: |
-          echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py) >> $GITHUB_OUTPUT
+          v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | tr -d '\r\n' | xargs)
+          echo "version=$v" >> $GITHUB_OUTPUT
+      # - id: our-version-major
+      #   run: |
+      #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f 1) >> $GITHUB_OUTPUT
+      # - id: our-version-minor
+      #   run: |
+      #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f 2) >> $GITHUB_OUTPUT
+      # - id: our-version-full
+      #   run: |
+      #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py) >> $GITHUB_OUTPUT
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -157,11 +169,43 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: '0'
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.75.0
+      - name: Bump version and push tag (safe)
+        id: create-tag
+        run: |
+          set -euo pipefail
+
+          TAG="${{ needs.build.outputs.our-version-full }}"
+          # remove whitespace/newlines
+          TAG="$(echo -n "$TAG" | tr -d '\r\n' | xargs)"
+
+          if [ -z "$TAG" ]; then
+            echo "No version found in needs.build.outputs.our-version-full; exiting."
+            exit 1
+          fi
+
+          echo "Resolved tag: '$TAG'"
+
+          # ensure we have remote tags info
+          git fetch --tags --prune origin
+
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "Tag ${TAG} already exists on origin — skipping creation."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${TAG}" -m "Release ${TAG}"
+            # push using PAT/GITHUB_TOKEN so it's authenticated in the runner
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "refs/tags/${TAG}"
+            echo "Tag ${TAG} created and pushed."
+          fi
         env:
-          CUSTOM_TAG: ${{ needs.build.outputs.our-version-full }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Bump version and push tag
+      #   uses: anothrNick/github-tag-action@1.75.0
+      #   env:
+      #     CUSTOM_TAG: ${{ needs.build.outputs.our-version-full }}
+      #     GITHUB_TOKEN: ${{ github.token }}
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
@@ -170,4 +214,4 @@ jobs:
           name: ${{ needs.build.outputs.our-version-full }}
           tag_name: ${{ needs.build.outputs.our-version-full }}
           generate_release_notes: true
-          token: ${{ github.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
