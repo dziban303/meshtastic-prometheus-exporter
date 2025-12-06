@@ -258,8 +258,7 @@ def on_native_message(packet, interface):
         on_meshtastic_mesh_packet(packet)
     except Exception as e:
         logger.error(
-            f"{e} occurred while processing MeshPacket {packet}, please consider submitting a PR/issue on GitHub: `{json.dumps(packet, default=repr)}` {';'.join(traceback.format_exc().splitlines())
-}"
+            f"{e} occurred while processing MeshPacket {packet}, please consider submitting a PR/issue on GitHub: `{json.dumps(packet, default=repr)}` {';'.join(traceback.format_exc().splitlines())}"
         )
         if "sentry_sdk" in globals():
             sentry_sdk.capture_exception(e)
