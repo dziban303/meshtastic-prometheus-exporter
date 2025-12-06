@@ -132,7 +132,9 @@ try:
 
     # Separate caches: long-lived node metadata and short-lived packet deduplication
     node_cache = TTLCache(maxsize=10000, ttl=3600 * 72)  # 72 hours for node metadata
-    packet_cache = TTLCache(maxsize=10000, ttl=config["flood_expire_time"])  # packet dedup TTL
+    packet_cache = TTLCache(
+        maxsize=10000, ttl=config["flood_expire_time"]
+    )  # packet dedup TTL
 
 except Exception as e:
     logger.fatal(
@@ -180,7 +182,9 @@ def on_meshtastic_mesh_packet(packet):
     source = packet["decoded"].get("source", packet["from"])
 
     # Node metadata lives in node_cache (long TTL)
-    source_long_name = get_decoded_node_metadata_from_cache(node_cache, source, "long_name")
+    source_long_name = get_decoded_node_metadata_from_cache(
+        node_cache, source, "long_name"
+    )
     source_short_name = get_decoded_node_metadata_from_cache(
         node_cache, source, "short_name"
     )
