@@ -130,7 +130,9 @@ try:
     metrics.set_meter_provider(provider)
     meter = metrics.get_meter("meshtastic_prometheus_exporter")
 
-    cache = TTLCache(maxsize=10000, ttl=config["flood_expire_time"])
+    # Separate caches: long-lived node metadata and short-lived packet deduplication
+    node_cache = TTLCache(maxsize=10000, ttl=3600 * 72)  # 72 hours for node metadata
+    packet_cache = TTLCache(maxsize=10000, ttl=config["flood_expire_time"])  # packet dedup TTL
 
 except Exception as e:
     logger.fatal(
@@ -169,29 +171,30 @@ def on_meshtastic_mesh_packet(packet):
     if packet.get("id", None) is None:
         return
 
-    # Use the packet id as the cache key for deduplication
-    unique = cache.setdefault(str(packet["id"]), True)
+    # Use the packet id as the packet_cache key for deduplication
+    unique = packet_cache.setdefault(str(packet["id"]), True)
     if not unique:
         logger.info(f"Skipping duplicate packet {packet['id']}")
         return
 
     source = packet["decoded"].get("source", packet["from"])
 
-    source_long_name = get_decoded_node_metadata_from_cache(cache, source, "long_name")
+    # Node metadata lives in node_cache (long TTL)
+    source_long_name = get_decoded_node_metadata_from_cache(node_cache, source, "long_name")
     source_short_name = get_decoded_node_metadata_from_cache(
-        cache, source, "short_name"
+        node_cache, source, "short_name"
     )
     from_long_name = get_decoded_node_metadata_from_cache(
-        cache, packet["from"], "long_name"
+        node_cache, packet["from"], "long_name"
     )
     from_short_name = get_decoded_node_metadata_from_cache(
-        cache, packet["from"], "short_name"
+        node_cache, packet["from"], "short_name"
     )
     to_long_name = get_decoded_node_metadata_from_cache(
-        cache, packet["to"], "long_name"
+        node_cache, packet["to"], "long_name"
     )
     to_short_name = get_decoded_node_metadata_from_cache(
-        cache, packet["to"], "short_name"
+        node_cache, packet["to"], "short_name"
     )
 
     # https://buf.build/meshtastic/protobufs/file/main:meshtastic/portnums.proto
@@ -216,10 +219,10 @@ def on_meshtastic_mesh_packet(packet):
         },
     )
     if packet["decoded"]["portnum"] == "NODEINFO_APP":
-        on_meshtastic_nodeinfo_app(cache, packet)
+        on_meshtastic_nodeinfo_app(node_cache, packet)
     else:
         known_source = (
-            get_decoded_node_metadata_from_cache(cache, source, "long_name")
+            get_decoded_node_metadata_from_cache(node_cache, source, "long_name")
             != "unknown"
         )
 
@@ -234,7 +237,7 @@ def on_meshtastic_mesh_packet(packet):
 
     if packet["decoded"]["portnum"] == "NEIGHBORINFO_APP":
         on_meshtastic_neighborinfo_app(
-            cache, packet, source_long_name, source_short_name
+            node_cache, packet, source_long_name, source_short_name
         )
 
 
@@ -270,14 +273,14 @@ def on_native_connection_lost(interface, topic=pub.AUTO_TOPIC):
     logger.warning(f"Lost connection to device over {type(interface).__name__}")
 
 
-def check_and_save_nodedb(iface, cache):
+def check_and_save_nodedb(iface, node_cache):
     if hasattr(iface, "nodes") and len(iface.nodes) > 0:
         logger.info(
             f"NodeDB is available, saving metadata in cache for {len(iface.nodes.values())} nodes"
         )
         for n in iface.nodes.values():
             save_node_metadata_in_cache(
-                cache,
+                node_cache,
                 n["num"],
                 {
                     "longName": n["user"]["longName"],
@@ -334,18 +337,18 @@ def main():
             iface = meshtastic.serial_interface.SerialInterface(
                 devPath=config.get("serial_device")
             )
-            check_and_save_nodedb(iface, cache)
+            check_and_save_nodedb(iface, node_cache)
         elif config.get("meshtastic_interface") == "TCP":
             iface = meshtastic.tcp_interface.TCPInterface(
                 hostname=config.get("interface_tcp_addr"),
                 portNumber=int(config.get("interface_tcp_port")),
             )
-            check_and_save_nodedb(iface, cache)
+            check_and_save_nodedb(iface, node_cache)
         elif config.get("meshtastic_interface") == "BLE":
             iface = meshtastic.ble_interface.BLEInterface(
                 address=config.get("interface_ble_addr"),
             )
-            check_and_save_nodedb(iface, cache)
+            check_and_save_nodedb(iface, node_cache)
         elif config.get("meshtastic_interface") == "MQTT":
             mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
@@ -365,7 +368,7 @@ def main():
                 keepalive=int(config["mqtt_keepalive"]),
             )
 
-            check_and_save_nodedb(object(), cache)
+            check_and_save_nodedb(object(), node_cache)
             mqttc.loop_forever()
 
         while True:
