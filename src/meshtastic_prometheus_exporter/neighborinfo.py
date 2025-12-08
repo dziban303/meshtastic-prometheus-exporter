@@ -34,7 +34,7 @@ def on_meshtastic_neighborinfo_app(cache, packet, source_long_name, source_short
         )
 
         meshtastic_neighbor_info_snr_decibels.set(
-            n["snr"], attributes=neighbor_info_attributes
+            n.get("snr", 0.0), attributes=neighbor_info_attributes
         )
         # https://buf.build/meshtastic/protobufs/file/main:meshtastic/mesh.proto#L1795
         # meshtastic_neighbor_info_last_rx_time.set(
