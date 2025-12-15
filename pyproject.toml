@@ -18,9 +18,9 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-  "opentelemetry-api==1.39.0",
-  "opentelemetry-exporter-prometheus==0.60b0",
-  "opentelemetry-sdk==1.39.0",
+  "opentelemetry-api==1.39.1",
+  "opentelemetry-exporter-prometheus==0.60b1",
+  "opentelemetry-sdk==1.39.1",
   "paho-mqtt==2.1.0",
   "cachetools==6.2.2",
   "meshtastic==2.7.5",
