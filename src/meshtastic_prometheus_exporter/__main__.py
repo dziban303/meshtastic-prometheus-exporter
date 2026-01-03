@@ -41,6 +41,9 @@ from meshtastic.protobuf import mqtt_pb2
 from prometheus_client import start_http_server
 from pubsub import pub
 
+import threading
+from typing import Optional
+
 from meshtastic_prometheus_exporter.metrics import *
 from meshtastic_prometheus_exporter.neighborinfo import on_meshtastic_neighborinfo_app
 from meshtastic_prometheus_exporter.nodeinfo import on_meshtastic_nodeinfo_app
@@ -115,6 +118,9 @@ handler.setFormatter(
 )
 
 logger.addHandler(handler)
+
+# used to signal a connection lost from meshtastic library event handlers
+connection_lost_event = threading.Event()
 
 try:
     reader = PrometheusMetricReader()
@@ -270,10 +276,20 @@ def on_native_message(packet, interface):
 
 def on_native_connection_established(interface, topic=pub.AUTO_TOPIC):
     logger.info(f"Connected to device over {type(interface).__name__}")
+    # clear any previous lost connection signal
+    try:
+        connection_lost_event.clear()
+    except Exception:
+        pass
 
 
 def on_native_connection_lost(interface, topic=pub.AUTO_TOPIC):
     logger.warning(f"Lost connection to device over {type(interface).__name__}")
+    # signal reconnect loop to reconnect immediately
+    try:
+        connection_lost_event.set()
+    except Exception:
+        pass
 
 
 def check_and_save_nodedb(iface, node_cache):
@@ -295,6 +311,98 @@ def check_and_save_nodedb(iface, node_cache):
         logger.warning(
             "Device NodeDB is empty or not available. NodeInfo packets are not sent often, so populating local NodeDB (stored in memory) may take from several hours to several days or more."
         )
+
+
+def _create_iface_for_interface_name(interface_name: str):
+    """
+    create/return meshtastic interface object for the configured interfaces, throw exception on failure
+    """
+    if interface_name == "SERIAL":
+        # config key is interface_serial_device
+        return meshtastic.serial_interface.SerialInterface(
+            devPath=config.get("interface_serial_device")
+        )
+    elif interface_name == "TCP":
+        return meshtastic.tcp_interface.TCPInterface(
+            hostname=config.get("interface_tcp_addr"),
+            portNumber=int(config.get("interface_tcp_port")),
+        )
+    elif interface_name == "BLE":
+        return meshtastic.ble_interface.BLEInterface(
+            address=config.get("interface_ble_addr"),
+        )
+    else:
+        raise ValueError(f"Unsupported interface: {interface_name}")
+
+
+def run_meshtastic_iface_with_reconnect(interface_name: str, max_backoff: int = 60):
+    """
+    create the meshtastic interface and keep it running.
+    if the connection drops or creation fails, retry with exponential backoff
+    The meshtastic library triggers pubsub events which will set connection_lost_event
+    """
+    backoff = 1
+    iface = None
+    while True:
+        try:
+            logger.info(f"Attempting to connect to Meshtastic device via {interface_name}")
+            # Clear any stale event
+            connection_lost_event.clear()
+            # create interface (may raise)
+            iface = _create_iface_for_interface_name(interface_name)
+            logger.info(f"Connected to Meshtastic device via {type(iface).__name__}")
+            # reset backoff after successful connection
+            backoff = 1
+
+            # populate nodedb if available
+            try:
+                check_and_save_nodedb(iface, node_cache)
+            except Exception:
+                logger.debug("check_and_save_nodedb failed", exc_info=True)
+
+            # Wait until a connection_lost_event is set (set by on_native_connection_lost)
+            # or until iface threads raise an exception (which would surface here).
+            # Connection-lost event will trigger immediate reconnect attempt.
+            while True:
+                # If someone set the event (connection lost), break to reconnect
+                if connection_lost_event.wait(timeout=1):
+                    logger.info("Detected connection lost signal, cleaning up and reconnecting")
+                    break
+                # Otherwise keep waiting (1s sleep granularity).
+                # This loop keeps the Python process alive while meshtastic interface manages background threads.
+                # If the interface itself throws synchronous exceptions they will be caught by the outer try/except.
+
+        except Exception as exc:
+            # Log and attempt to backoff + retry
+            logger.exception(f"Exception while running Meshtastic interface: {exc}")
+            logger.info("Will attempt to reconnect after backoff")
+            try:
+                if iface is not None:
+                    try:
+                        iface.close()
+                    except Exception:
+                        logger.debug("Error closing iface during exception handling", exc_info=True)
+                    iface = None
+            finally:
+                time.sleep(backoff)
+                backoff = min(backoff * 2, max_backoff)
+                continue
+        finally:
+            # Ensure iface is closed before attempting reconnect
+            try:
+                if iface is not None:
+                    try:
+                        iface.close()
+                    except Exception:
+                        logger.debug("Error closing iface during cleanup", exc_info=True)
+                    iface = None
+            except Exception:
+                logger.debug("Exception during final cleanup", exc_info=True)
+
+        # if we're here something fucked up and connection_lost_event was set; backoff before reconnecting
+        logger.info(f"Reconnecting after backoff {backoff}s")
+        time.sleep(backoff)
+        backoff = min(backoff * 2, max_backoff)
 
 
 def main():
@@ -336,23 +444,13 @@ def main():
         )
         pub.subscribe(on_native_connection_lost, "meshtastic.connection.lost")
 
-        if config.get("meshtastic_interface") == "SERIAL":
-            iface = meshtastic.serial_interface.SerialInterface(
-                devPath=config.get("serial_device")
-            )
-            check_and_save_nodedb(iface, node_cache)
-        elif config.get("meshtastic_interface") == "TCP":
-            iface = meshtastic.tcp_interface.TCPInterface(
-                hostname=config.get("interface_tcp_addr"),
-                portNumber=int(config.get("interface_tcp_port")),
-            )
-            check_and_save_nodedb(iface, node_cache)
-        elif config.get("meshtastic_interface") == "BLE":
-            iface = meshtastic.ble_interface.BLEInterface(
-                address=config.get("interface_ble_addr"),
-            )
-            check_and_save_nodedb(iface, node_cache)
+        # For SERIAL / TCP / BLE we run a reconnect loop that recreates the interface on failure.
+        if config.get("meshtastic_interface") in ["SERIAL", "TCP", "BLE"]:
+            # Run reconnect loop in the main thread — it blocks and handles reconnects.
+            run_meshtastic_iface_with_reconnect(config.get("meshtastic_interface"))
+
         elif config.get("meshtastic_interface") == "MQTT":
+            # MQTT client handles reconnects itself via loop_forever(); leave behavior as-is
             mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
             mqttc.on_connect = on_connect
@@ -374,6 +472,7 @@ def main():
             check_and_save_nodedb(object(), node_cache)
             mqttc.loop_forever()
 
+        # keep the main thread alive if the above returns for any reason
         while True:
             time.sleep(1)
 
