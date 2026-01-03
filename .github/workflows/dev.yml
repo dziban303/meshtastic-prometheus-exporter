@@ -11,6 +11,59 @@ on:
   workflow_dispatch:
 
 jobs:
+
+
+  build:
+    name: Build Python Wheel 📦
+    runs-on: ubuntu-latest
+    # if: github.ref == 'refs/heads/main' && needs.test.outputs.version-changed == 'true'
+    # needs:
+    #   - test
+    outputs:
+      our-version-major: ${{ steps.our-version-major.outputs.version }}
+      our-version-minor: ${{ steps.our-version-minor.outputs.version }}
+      our-version-full: ${{ steps.our-version-full.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: our-version-major
+        run: |
+          v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f1 | tr -d '\r\n' | xargs)
+          echo "version=$v" >> $GITHUB_OUTPUT
+      - id: our-version-minor
+        run: |
+          v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f2 | tr -d '\r\n' | xargs)
+          echo "version=$v" >> $GITHUB_OUTPUT
+      - id: our-version-full
+        run: |
+          v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | tr -d '\r\n' | xargs)
+          echo "version=$v" >> $GITHUB_OUTPUT
+      # - id: our-version-major
+      #   run: |
+      #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f 1) >> $GITHUB_OUTPUT
+      # - id: our-version-minor
+      #   run: |
+      #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f 2) >> $GITHUB_OUTPUT
+      # - id: our-version-full
+      #   run: |
+      #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py) >> $GITHUB_OUTPUT
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+      - name: Install hatch
+        run: >-
+          python3 -m
+          pip install
+          hatch
+      - name: Build a binary wheel and a source tarball
+        run: hatch build
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
   build-and-push:
     runs-on: ubuntu-latest
 
