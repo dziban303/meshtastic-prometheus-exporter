@@ -345,7 +345,9 @@ def run_meshtastic_iface_with_reconnect(interface_name: str, max_backoff: int = 
     iface = None
     while True:
         try:
-            logger.info(f"Attempting to connect to Meshtastic device via {interface_name}")
+            logger.info(
+                f"Attempting to connect to Meshtastic device via {interface_name}"
+            )
             # Clear any stale event
             connection_lost_event.clear()
             # create interface (may raise)
@@ -366,7 +368,9 @@ def run_meshtastic_iface_with_reconnect(interface_name: str, max_backoff: int = 
             while True:
                 # If someone set the event (connection lost), break to reconnect
                 if connection_lost_event.wait(timeout=1):
-                    logger.info("Detected connection lost signal, cleaning up and reconnecting")
+                    logger.info(
+                        "Detected connection lost signal, cleaning up and reconnecting"
+                    )
                     break
                 # Otherwise keep waiting (1s sleep granularity).
                 # This loop keeps the Python process alive while meshtastic interface manages background threads.
@@ -381,7 +385,10 @@ def run_meshtastic_iface_with_reconnect(interface_name: str, max_backoff: int = 
                     try:
                         iface.close()
                     except Exception:
-                        logger.debug("Error closing iface during exception handling", exc_info=True)
+                        logger.debug(
+                            "Error closing iface during exception handling",
+                            exc_info=True,
+                        )
                     iface = None
             finally:
                 time.sleep(backoff)
@@ -394,7 +401,9 @@ def run_meshtastic_iface_with_reconnect(interface_name: str, max_backoff: int = 
                     try:
                         iface.close()
                     except Exception:
-                        logger.debug("Error closing iface during cleanup", exc_info=True)
+                        logger.debug(
+                            "Error closing iface during cleanup", exc_info=True
+                        )
                     iface = None
             except Exception:
                 logger.debug("Exception during final cleanup", exc_info=True)
