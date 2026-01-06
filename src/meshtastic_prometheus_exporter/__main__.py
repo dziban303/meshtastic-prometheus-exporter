@@ -250,10 +250,11 @@ def on_meshtastic_mesh_packet(packet):
         on_meshtastic_neighborinfo_app(
             node_cache, packet, source_long_name, source_short_name
         )
-    
+
     if packet["decoded"]["portnum"] == "POSITION_APP":
         on_meshtastic_position_app(packet, source_long_name, source_short_name)
-        
+
+
 def on_message(client, userdata, msg):
     try:
         envelope = mqtt_pb2.ServiceEnvelope.FromString(msg.payload)
