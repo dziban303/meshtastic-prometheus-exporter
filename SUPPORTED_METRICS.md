@@ -22,6 +22,10 @@
 | meshtastic_telemetry_power_ch2_current_amperes          | gauge   |
 | meshtastic_telemetry_power_ch3_voltage_volts            | gauge   |
 | meshtastic_telemetry_power_ch3_current_amperes          | gauge   |
+| meshtastic_telemetry_position_sats_in_view              | gauge   |
+| meshtastic_telemetry_position_pdop                      | gauge   |
+| meshtastic_telemetry_position_hdop                      | gauge   |
+| meshtastic_telemetry_position_vdop                      | gauge   |
 
 ## Air quality metrics
 

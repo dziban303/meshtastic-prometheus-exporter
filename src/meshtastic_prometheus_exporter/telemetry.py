@@ -1,5 +1,3 @@
-import logging
-import json
 from meshtastic_prometheus_exporter.metrics import *
 from meshtastic_prometheus_exporter.util import get_decoded_node_metadata_from_cache
 
@@ -77,6 +75,7 @@ def on_meshtastic_telemetry_app(packet, source_long_name, source_short_name):
                 telemetry["environmentMetrics"]["current"] * 10**-3,
                 attributes=telemetry_attributes,
             )
+
     if "airQualityMetrics" in telemetry:
         logger.info(f"MeshPacket {packet['id']} is air quality metrics telemetry")
         meshtastic_telemetry_air_quality_pm10_standard.set(
@@ -127,29 +126,50 @@ def on_meshtastic_telemetry_app(packet, source_long_name, source_short_name):
             telemetry["airQualityMetrics"]["particles_100um"],
             attributes=telemetry_attributes,
         )
-    if "powerMetrics" in telemetry:
-        logger.info(f"MeshPacket {packet['id']} is power metrics telemetry")
-        meshtastic_telemetry_power_ch1_voltage_volts.set(
-            telemetry["powerMetrics"]["ch1_voltage"],
-            attributes=telemetry_attributes,
-        )
-        meshtastic_telemetry_power_ch1_current_amperes.set(
-            telemetry["powerMetrics"]["ch1_current"] * 10**-3,
-            attributes=telemetry_attributes,
-        )
-        meshtastic_telemetry_power_ch2_voltage_volts.set(
-            telemetry["powerMetrics"]["ch2_voltage"],
-            attributes=telemetry_attributes,
-        )
-        meshtastic_telemetry_power_ch2_current_amperes.set(
-            telemetry["powerMetrics"]["ch2_current"] * 10**-3,
-            attributes=telemetry_attributes,
-        )
-        meshtastic_telemetry_power_ch3_voltage_volts.set(
-            telemetry["powerMetrics"]["ch3_voltage"],
-            attributes=telemetry_attributes,
-        )
-        meshtastic_telemetry_power_ch3_current_amperes.set(
-            telemetry["powerMetrics"]["ch3_current"] * 10**-3,
-            attributes=telemetry_attributes,
-        )
+
+    # Position telemetry (satsInView, PDOP/HDOP/VDOP)
+    if "position" in telemetry:
+        logger.info(f"MeshPacket {packet['id']} is position telemetry")
+        pos = telemetry["position"]
+
+        # satsInView
+        sats = None
+        if "satsInView" in pos:
+            sats = pos.get("satsInView")
+        elif "sats_in_view" in pos:
+            sats = pos.get("sats_in_view")
+        if sats is not None:
+            try:
+                meshtastic_telemetry_position_sats_in_view.set(
+                    float(sats), attributes=telemetry_attributes
+                )
+            except Exception:
+                logger.debug("Failed to set satsInView metric", exc_info=True)
+
+        # PDOP / HDOP / VDOP (accept common key casings)
+        def get_dop(key_variants):
+            for k in key_variants:
+                v = pos.get(k)
+                if v is not None:
+                    return v
+            return None
+
+        pdop = get_dop(["pdop", "PDOP", "pDOP"])
+        hdop = get_dop(["hdop", "HDOP", "hDOP"])
+        vdop = get_dop(["vdop", "VDOP", "vDOP"])
+
+        if pdop is not None:
+            try:
+                meshtastic_telemetry_position_pdop.set(float(pdop), attributes=telemetry_attributes)
+            except Exception:
+                logger.debug("Failed to set PDOP metric", exc_info=True)
+        if hdop is not None:
+            try:
+                meshtastic_telemetry_position_hdop.set(float(hdop), attributes=telemetry_attributes)
+            except Exception:
+                logger.debug("Failed to set HDOP metric", exc_info=True)
+        if vdop is not None:
+            try:
+                meshtastic_telemetry_position_vdop.set(float(vdop), attributes=telemetry_attributes)
+            except Exception:
+                logger.debug("Failed to set VDOP metric", exc_info=True)
