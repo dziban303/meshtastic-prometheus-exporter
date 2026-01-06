@@ -131,18 +131,18 @@ meshtastic_telemetry_air_quality_particles_100um = meter.create_gauge(
 )
 
 # New position-related metrics
-meshtastic_telemetry_position_sats_in_view = meter.create_gauge(
-    name="meshtastic_telemetry_position_sats_in_view",
+meshtastic_position_sats_in_view = meter.create_gauge(
+    name="meshtastic_position_sats_in_view",
 )
 
-meshtastic_telemetry_position_pdop = meter.create_gauge(
-    name="meshtastic_telemetry_position_pdop",
+meshtastic_position_pdop = meter.create_gauge(
+    name="meshtastic_position_pdop",
 )
 
-meshtastic_telemetry_position_hdop = meter.create_gauge(
-    name="meshtastic_telemetry_position_hdop",
+meshtastic_position_hdop = meter.create_gauge(
+    name="meshtastic_position_hdop",
 )
 
-meshtastic_telemetry_position_vdop = meter.create_gauge(
-    name="meshtastic_telemetry_position_vdop",
+meshtastic_position_vdop = meter.create_gauge(
+    name="meshtastic_position_vdop",
 )

@@ -48,6 +48,7 @@ from meshtastic_prometheus_exporter.metrics import *
 from meshtastic_prometheus_exporter.neighborinfo import on_meshtastic_neighborinfo_app
 from meshtastic_prometheus_exporter.nodeinfo import on_meshtastic_nodeinfo_app
 from meshtastic_prometheus_exporter.telemetry import on_meshtastic_telemetry_app
+from meshtastic_prometheus_exporter.position import on_meshtastic_position_app
 from meshtastic_prometheus_exporter.util import (
     get_decoded_node_metadata_from_cache,
     save_node_metadata_in_cache,
@@ -249,8 +250,10 @@ def on_meshtastic_mesh_packet(packet):
         on_meshtastic_neighborinfo_app(
             node_cache, packet, source_long_name, source_short_name
         )
-
-
+    
+    if packet["decoded"]["portnum"] == "POSITION_APP":
+        on_meshtastic_position_app(packet, source_long_name, source_short_name)
+        
 def on_message(client, userdata, msg):
     try:
         envelope = mqtt_pb2.ServiceEnvelope.FromString(msg.payload)
