@@ -1,3 +1,5 @@
+import logging
+import json
 from meshtastic_prometheus_exporter.metrics import *
 from meshtastic_prometheus_exporter.util import get_decoded_node_metadata_from_cache
 
