@@ -160,16 +160,22 @@ def on_meshtastic_telemetry_app(packet, source_long_name, source_short_name):
 
         if pdop is not None:
             try:
-                meshtastic_telemetry_position_pdop.set(float(pdop), attributes=telemetry_attributes)
+                meshtastic_telemetry_position_pdop.set(
+                    float(pdop), attributes=telemetry_attributes
+                )
             except Exception:
                 logger.debug("Failed to set PDOP metric", exc_info=True)
         if hdop is not None:
             try:
-                meshtastic_telemetry_position_hdop.set(float(hdop), attributes=telemetry_attributes)
+                meshtastic_telemetry_position_hdop.set(
+                    float(hdop), attributes=telemetry_attributes
+                )
             except Exception:
                 logger.debug("Failed to set HDOP metric", exc_info=True)
         if vdop is not None:
             try:
-                meshtastic_telemetry_position_vdop.set(float(vdop), attributes=telemetry_attributes)
+                meshtastic_telemetry_position_vdop.set(
+                    float(vdop), attributes=telemetry_attributes
+                )
             except Exception:
                 logger.debug("Failed to set VDOP metric", exc_info=True)
