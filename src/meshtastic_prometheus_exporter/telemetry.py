@@ -67,6 +67,11 @@ def on_meshtastic_telemetry_app(packet, source_long_name, source_short_name):
                 telemetry["environmentMetrics"]["gasResistance"] / 10**6,
                 attributes=telemetry_attributes,
             )
+        if "iaq" in telemetry["environmentMetrics"]:
+            meshtastic_telemetry_env_gas_resistance_ohms.set(
+                telemetry["environmentMetrics"]["iaq"],
+                attributes=telemetry_attributes,
+            )
         if "voltage" in telemetry["environmentMetrics"]:
             meshtastic_telemetry_env_voltage_volts.set(
                 telemetry["environmentMetrics"]["voltage"],

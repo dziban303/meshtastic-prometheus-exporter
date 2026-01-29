@@ -14,6 +14,7 @@
 | meshtastic_telemetry_env_relative_humidity_percent      | gauge   |
 | meshtastic_telemetry_env_barometric_pressure_pascal     | gauge   |
 | meshtastic_telemetry_env_gas_resistance_ohms            | gauge   |
+| meshtastic_telemetry_env_iaq                            | gauge   |
 | meshtastic_telemetry_env_voltage_volts                  | gauge   |
 | meshtastic_telemetry_env_current_amperes                | gauge   |
 | meshtastic_telemetry_power_ch1_voltage_volts            | gauge   |

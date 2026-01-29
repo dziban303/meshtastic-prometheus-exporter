@@ -50,6 +50,10 @@ meshtastic_telemetry_env_gas_resistance_ohms = meter.create_gauge(
     name="meshtastic_telemetry_env_gas_resistance_ohms",
 )
 
+meshtastic_telemetry_env_iaq = meter.create_gauge(
+    name="meshtastic_telemetry_env_iaq",
+)
+
 meshtastic_telemetry_env_voltage_volts = meter.create_gauge(
     name="meshtastic_telemetry_env_voltage_volts",
 )
