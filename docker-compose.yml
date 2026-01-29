@@ -1,0 +1,66 @@
+volumes:
+    prometheus_data:
+    grafana_data:
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    extra_hosts:
+          - "host.docker.internal:host-gateway"
+    networks:
+      - mesh-bridge
+    environment:
+      - TZ=UTC
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-admin-api
+    volumes:
+      - prometheus_data:/prometheus
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3000:3000"
+    networks:
+      - mesh-bridge
+    environment:
+      - TZ=UTC
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_NAME=public
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./docker/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana-dashboards:/var/lib/grafana/dashboards
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+
+  exporter:
+    image: ghcr.io/dziban303/meshtastic-prometheus-exporter:latest
+    restart: unless-stopped
+    environment:
+      - MESHTASTIC_INTERFACE=MQTT
+      - MQTT_ADDRESS=mqtt.meshtastic.org
+      - MQTT_USE_TLS=0
+      - MQTT_PORT=1883
+      - MQTT_KEEPALIVE=15
+      - MQTT_USERNAME=meshdev
+      - MQTT_PASSWORD=large4cats
+      - MQTT_TOPIC=msh/US/#
+    networks:
+      - mesh-bridge
+
+networks:
+  mesh-bridge:
+    driver: bridge
