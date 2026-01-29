@@ -306,9 +306,9 @@ def check_and_save_nodedb(iface, node_cache):
                 node_cache,
                 n["num"],
                 {
-                    "longName": n["user"]["longName"],
-                    "shortName": n["user"]["shortName"],
-                    "hwModel": n["user"]["hwModel"],
+                    "longName": n["user"].get("longName", "unknown"),
+                    "shortName": n["user"].get("shortName", "unknown"),
+                    "hwModel": n["user"].get("hwModel", "unknown"),
                 },
             )
     else:
