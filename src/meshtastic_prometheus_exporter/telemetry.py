@@ -68,7 +68,7 @@ def on_meshtastic_telemetry_app(packet, source_long_name, source_short_name):
                 attributes=telemetry_attributes,
             )
         if "iaq" in telemetry["environmentMetrics"]:
-            meshtastic_telemetry_env_gas_resistance_ohms.set(
+            meshtastic_telemetry_env_iaq.set(
                 telemetry["environmentMetrics"]["iaq"],
                 attributes=telemetry_attributes,
             )
