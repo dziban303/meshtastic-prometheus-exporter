@@ -584,6 +584,236 @@
       "type": "timeseries"
     },
     {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Sats in View",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "h": 8,
+        "w": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "always",
+            "showValues": false,
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "axisCenteredZero": false,
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic",
+            "seriesBy": "last"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "a7ee7fd2-ee1a-4400-b169-afa1f8c619ed"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "avg_over_time(meshtastic_position_sats_in_view{source_long_name=~\"$source\"}[$__interval])",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "interval": "1m",
+          "legendFormat": "{{source_long_name}} ({{source}})",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "a7ee7fd2-ee1a-4400-b169-afa1f8c619ed"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+          "hideZeros": false
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "sortBy": "Last *",
+          "sortDesc": true
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Dilution of Precision (DOP)",
+      "description": "Combined graph of HDOP/PDOP (and VDOP if it exists)",
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "h": 8,
+        "w": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "always",
+            "showValues": false,
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "axisCenteredZero": false,
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic",
+            "seriesBy": "last"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "a7ee7fd2-ee1a-4400-b169-afa1f8c619ed"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "exemplar": false,
+          "expr": "avg_over_time(meshtastic_position_hdop{source_long_name=~\"$source\"}[$__interval])",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "interval": "1m",
+          "legendFormat": "{{source_long_name}} ({{source}})",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        },
+        {
+          "refId": "B",
+          "expr": "avg_over_time(meshtastic_position_pdop{source_long_name=~\"$source\"}[$__interval])",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "uid": "a7ee7fd2-ee1a-4400-b169-afa1f8c619ed",
+            "type": "prometheus"
+          },
+          "hide": false,
+          "editorMode": "builder",
+          "legendFormat": "{{source_long_name}} ({{source}})",
+          "interval": "1m",
+          "exemplar": false
+        }
+      ],
+      "datasource": {
+        "type": "prometheus",
+        "uid": "a7ee7fd2-ee1a-4400-b169-afa1f8c619ed"
+      },
+      "options": {
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+          "hideZeros": false
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "sortBy": "Last *",
+          "sortDesc": true
+        }
+      }
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "a7ee7fd2-ee1a-4400-b169-afa1f8c619ed"

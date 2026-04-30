@@ -14,6 +14,7 @@
 | meshtastic_telemetry_env_relative_humidity_percent      | gauge   |
 | meshtastic_telemetry_env_barometric_pressure_pascal     | gauge   |
 | meshtastic_telemetry_env_gas_resistance_ohms            | gauge   |
+| meshtastic_telemetry_env_iaq                            | gauge   |
 | meshtastic_telemetry_env_voltage_volts                  | gauge   |
 | meshtastic_telemetry_env_current_amperes                | gauge   |
 | meshtastic_telemetry_power_ch1_voltage_volts            | gauge   |
@@ -22,6 +23,10 @@
 | meshtastic_telemetry_power_ch2_current_amperes          | gauge   |
 | meshtastic_telemetry_power_ch3_voltage_volts            | gauge   |
 | meshtastic_telemetry_power_ch3_current_amperes          | gauge   |
+| meshtastic_telemetry_position_sats_in_view              | gauge   |
+| meshtastic_telemetry_position_pdop                      | gauge   |
+| meshtastic_telemetry_position_hdop                      | gauge   |
+| meshtastic_telemetry_position_vdop                      | gauge   |
 
 ## Air quality metrics
 
