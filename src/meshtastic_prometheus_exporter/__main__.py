@@ -25,7 +25,6 @@ import sys
 import time
 import traceback
 from sys import stdout
-from google.protobuf.json_format import MessageToDict
 
 import google.protobuf.message
 import meshtastic.ble_interface
