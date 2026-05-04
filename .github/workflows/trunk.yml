@@ -26,7 +26,7 @@ jobs:
           hatch
       - name: Run tests
         run: hatch test
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
