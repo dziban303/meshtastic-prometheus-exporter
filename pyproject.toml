@@ -25,7 +25,7 @@ dependencies = [
   "cachetools==7.1.6",
   "meshtastic==2.7.11",
   "Pypubsub==4.0.7",
-  "sentry-sdk==2.66.1",
+  "sentry-sdk==2.68.0",
 ]
 
 [project.urls]
