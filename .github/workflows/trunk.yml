@@ -12,7 +12,7 @@ jobs:
     outputs:
       version-changed: ${{ steps.changes.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: psf/black@stable
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -44,7 +44,7 @@ jobs:
       our-version-minor: ${{ steps.our-version-minor.outputs.version }}
       our-version-full: ${{ steps.our-version-full.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - id: our-version-major
         run: |
           v=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py | cut -d '.' -f1 | tr -d '\r\n' | xargs)
@@ -96,7 +96,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download all the dists
         uses: actions/download-artifact@v8
@@ -166,7 +166,7 @@ jobs:
       - build-and-push-image
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: '0'
       - name: Bump version and push tag (safe)
