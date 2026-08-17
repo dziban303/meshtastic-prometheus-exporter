@@ -47,7 +47,7 @@ jobs:
       #   run: |
       #     echo version=$(grep -oP '(?<=__version__ = ")[^"]*' src/meshtastic_prometheus_exporter/__about__.py) >> $GITHUB_OUTPUT
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: 'pip'
