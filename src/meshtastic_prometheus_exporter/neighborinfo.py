@@ -18,7 +18,7 @@ def on_meshtastic_neighborinfo_app(cache, packet, source_long_name, source_short
         "source_long_name": source_long_name,
         "source_short_name": source_short_name,
     }
-    for n in neighbor_info["neighbors"]:
+    for n in neighbor_info.get("neighbors", []):
         neighbor_source = n["nodeId"]
 
         neighbor_info_attributes["neighbor_source"] = neighbor_source or "unknown"
